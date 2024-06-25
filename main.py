@@ -149,7 +149,7 @@ class InvoiceGenerator(QMainWindow):
         customer_name = self.customerInput.text()
         customer_phone = self.phoneInput.text()
 
-        if date and venue and customer_name and customer_phone:
+        if date and venue and customer_name and customer_phone and self.itemsTable.rowCount() > 0:
             conn = sqlite3.connect('invoices.db')
             c = conn.cursor()
             c.execute("INSERT INTO invoices (date, venue, customer_name, customer_phone, total_amount) VALUES (?, ?, ?, ?, ?)",
