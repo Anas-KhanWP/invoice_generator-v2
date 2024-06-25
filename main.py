@@ -95,7 +95,7 @@ class InvoiceGenerator(QMainWindow):
         self.saveButton = QPushButton('Save Invoice', self)
         self.viewButton = QPushButton('View Invoices', self)
         
-        self.saveButton.clicked.connect(self.save_invoice)
+        self.saveButton.clicked.connect(self.save_and_generate_pdf)
         self.viewButton.clicked.connect(self.view_invoices)
         
         self.layout.addWidget(self.saveButton)
@@ -142,20 +142,20 @@ class InvoiceGenerator(QMainWindow):
             except (ValueError, TypeError):
                 pass
         self.totalAmountLabel.setText(f'Total Amount: {total_amount:.2f}')
-    
-    def save_invoice(self):
+        
+    def save_and_generate_pdf(self):
         date = self.dateInput.text()
         venue = self.venueInput.text()
         customer_name = self.customerInput.text()
         customer_phone = self.phoneInput.text()
-        
+
         if date and venue and customer_name and customer_phone:
             conn = sqlite3.connect('invoices.db')
             c = conn.cursor()
             c.execute("INSERT INTO invoices (date, venue, customer_name, customer_phone, total_amount) VALUES (?, ?, ?, ?, ?)",
-                      (date, venue, customer_name, customer_phone, self.calculate_total_amount()))
+                    (date, venue, customer_name, customer_phone, self.calculate_total_amount()))
             invoice_id = c.lastrowid
-            
+
             for row in range(self.itemsTable.rowCount()):
                 name = self.itemsTable.item(row, 0).text()
                 description = self.itemsTable.item(row, 1).text()
@@ -163,11 +163,52 @@ class InvoiceGenerator(QMainWindow):
                 quantity = int(self.itemsTable.item(row, 3).text())
                 total_price = float(self.itemsTable.item(row, 4).text())
                 c.execute("INSERT INTO invoice_items (invoice_id, name, description, price, quantity, total_price) VALUES (?, ?, ?, ?, ?, ?)",
-                          (invoice_id, name, description, price, quantity, total_price))
-            
+                        (invoice_id, name, description, price, quantity, total_price))
+
             conn.commit()
             conn.close()
             QMessageBox.information(self, 'Success', 'Invoice saved successfully!')
+
+            # Generate PDF using saved data
+            conn = sqlite3.connect('invoices.db')
+            c = conn.cursor()
+
+            # Fetch the latest invoice details
+            c.execute("SELECT * FROM invoices WHERE invoice_id = ?", (invoice_id,))
+            invoice = c.fetchone()
+
+            # Fetch items related to the invoice
+            c.execute("SELECT * FROM invoice_items WHERE invoice_id = ?", (invoice_id,))
+            items = c.fetchall()
+
+            conn.close()
+
+            # Generate PDF
+            pdf = CustomPDF()
+            pdf.add_page()
+
+            pdf.set_font("Helvetica", size=12)
+
+            pdf.cell(200, 10, txt=f"Invoice ID: {invoice[0]}", ln=True, align='L')
+            pdf.cell(200, 10, txt=f"Date: {invoice[1]}", ln=True, align='L')
+            pdf.cell(200, 10, txt=f"Venue: {invoice[2]}", ln=True, align='L')
+            pdf.cell(200, 10, txt=f"Customer Name: {invoice[3]}", ln=True, align='L')
+            pdf.cell(200, 10, txt=f"Customer Phone: {invoice[4]}", ln=True, align='L')
+            pdf.cell(200, 10, txt=f"Total Amount: {invoice[5]:.2f}", ln=True, align='L')
+
+            pdf.cell(200, 10, txt="", ln=True, align='L')
+
+            pdf.multi_cell_row(5, 40, 10, ["Item Name", "Description", "Price", "Quantity", "Total Price"])
+
+            pdf.set_font("Helvetica", size=10)
+
+            for item in items:
+                pdf.multi_cell_row(5, 40, 5, [item[2], item[3], f"{item[4]:.2f}", str(item[5]), f"{item[6]:.2f}"])
+
+            pdf_name = f"invoice_{invoice_id}.pdf"
+            pdf.output(pdf_name)
+
+            QMessageBox.information(self, 'PDF Generated', f'PDF file has been generated: {pdf_name}')
             self.clear_form()
         else:
             QMessageBox.warning(self, 'Error', 'Please fill all fields.')
