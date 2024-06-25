@@ -1,7 +1,7 @@
 import sys
 import sqlite3
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QFormLayout, QLabel, QLineEdit, 
-                             QPushButton, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QDateEdit)
+                             QPushButton, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QDateEdit, QInputDialog)
 from PyQt5.QtCore import QDate
 from fpdf import FPDF
 from custom import CustomPDF
@@ -205,7 +205,7 @@ class InvoiceGenerator(QMainWindow):
             for item in items:
                 pdf.multi_cell_row(5, 40, 5, [item[2], item[3], f"{item[4]:.2f}", str(item[5]), f"{item[6]:.2f}"])
 
-            pdf_name = f"invoice_{invoice_id}.pdf"
+            pdf_name = f"invoices/invoice_{invoice_id}.pdf"
             pdf.output(pdf_name)
 
             QMessageBox.information(self, 'PDF Generated', f'PDF file has been generated: {pdf_name}')
@@ -232,8 +232,13 @@ class InvoiceGenerator(QMainWindow):
         self.totalAmountLabel.setText('Total Amount: 0.0')
     
     def view_invoices(self):
-        self.invoiceWindow = InvoiceViewer()
-        self.invoiceWindow.show()
+        password, ok = QInputDialog.getText(self, 'Authentication', 'Enter password:', QLineEdit.Password)
+        if ok and password == 'retriever':  # Replace 'your_password' with the actual password
+            self.invoiceWindow = InvoiceViewer()
+            self.invoiceWindow.show()
+        else:
+            QMessageBox.warning(self, 'Error', 'Authentication failed')
+
 
 class InvoiceViewer(QMainWindow):
     def __init__(self):
@@ -301,11 +306,6 @@ class InvoiceViewer(QMainWindow):
         
         pdf.cell(200, 10, txt="", ln=True, align='L')
         
-        # pdf.cell(40, 10, txt="Item Name", border=1)
-        # pdf.cell(60, 10, txt="Description", border=1)
-        # pdf.cell(30, 10, txt="Price", border=1)
-        # pdf.cell(30, 10, txt="Quantity", border=1)
-        # pdf.cell(30, 10, txt="Total Price", border=1)
         pdf.ln()
         
         pdf.multi_cell_row(5, 40, 10, ["Item Name", "Description", "Price", "Quantity", "Total Price"])
@@ -315,7 +315,7 @@ class InvoiceViewer(QMainWindow):
         for item in items:
             pdf.multi_cell_row(5, 40, 5, [item[2], item[3], f"{item[4]:.2f}", str(item[5]), f"{item[6]:.2f}"])
         
-        pdf_name = f"invoice_{invoice_id}.pdf"
+        pdf_name = f"duplicate_invoices/invoice_{invoice_id}.pdf"
         pdf.output(pdf_name)
         
         QMessageBox.information(self, 'PDF Generated', f'PDF file has been generated: {pdf_name}')
