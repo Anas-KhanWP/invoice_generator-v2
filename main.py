@@ -187,26 +187,91 @@ class InvoiceGenerator(QMainWindow):
             pdf = CustomPDF()
             pdf.add_page()
 
-            pdf.set_font("Helvetica", size=12)
-
-            pdf.cell(200, 10, txt=f"Invoice ID: {invoice[0]}", ln=True, align='L')
-            pdf.cell(200, 10, txt=f"Date: {invoice[1]}", ln=True, align='L')
-            pdf.cell(200, 10, txt=f"Venue: {invoice[2]}", ln=True, align='L')
-            pdf.cell(200, 10, txt=f"Customer Name: {invoice[3]}", ln=True, align='L')
-            pdf.cell(200, 10, txt=f"Customer Phone: {invoice[4]}", ln=True, align='L')
-            pdf.cell(200, 10, txt=f"Total Amount: {invoice[5]:.2f}", ln=True, align='L')
-
+            pdf.set_char_spacing(0)
+        
+            # Invoice Header
+            pdf.set_font("Helvetica", size=15, style='B')
+            pdf.set_fill_color(0, 0, 0)
+            pdf.set_text_color(255, 255, 255)
+            pdf.set_xy(x=0, y=5)
+            pdf.cell(210, 10, txt='INVOICE', align='C', fill=True)
+            
+            # Reset Colors
+            pdf.set_fill_color(255, 255, 255)
+            pdf.set_text_color(0, 0, 0)
+            
+            # Set Logo
+            pdf.image('logo_resized.png', x=10, y=20, w=50, h=35)
+            
+            pdf.set_font("Helvetica", size=14, style='B')
+            
+            # Align right with Logo
+            pdf.set_xy(x=120, y=30)
+            pdf.set_fill_color(238, 238, 238)
+            pdf.cell(30, 7, txt=f"Invoice ID:", ln=True, align='L', fill=True, border=1)
+            pdf.set_xy(x=150, y=30)
+            pdf.set_font("Helvetica", size=14, style='')
+            pdf.cell(40, 7, txt=f"{invoice[0]}", ln=True, align='L', border=1, fill=False)
+            pdf.set_xy(x=120, y=37)
+            pdf.set_font("Helvetica", size=14, style='B')
+            pdf.cell(30, 7, txt=f"Date:", ln=True, align='L', fill=True, border=1)
+            pdf.set_xy(x=150, y=37)
+            pdf.set_font("Helvetica", size=14, style='')
+            pdf.cell(40, 7, txt=f"{invoice[1]}", ln=True, align='L', border=1, fill=False)
+            pdf.set_xy(x=120, y=44)
+            pdf.set_font("Helvetica", size=14, style='B')
+            pdf.multi_cell(30, 7, txt=f"Venue:", ln=True, align='L', fill=True, border=1)
+            pdf.set_xy(x=150, y=44)
+            pdf.set_font("Helvetica", size=14, style='')
+            pdf.multi_cell(40, 7, txt=f"{invoice[2]}", ln=True, align='L', border=1, fill=False)
+            
+            pdf.set_font("Helvetica", size=10, style='')
+            
+            # Below Logo Customer Details
+            pdf.set_xy(x=7, y=81)
+            pdf.cell(43, 7, txt=f"Customer Name:", ln=True, align='L', fill=True, border=1)
+            pdf.set_xy(x=48, y=81)
+            pdf.cell(43, 7, txt=f"{invoice[3]}", ln=True, align='L', fill=True, border=1)
+            pdf.set_xy(x=7, y=88)
+            pdf.cell(43, 7, txt=f"Customer Phone:", ln=True, align='L', fill=True, border=1)
+            pdf.set_xy(x=48, y=88)
+            pdf.cell(43, 7, txt=f"{invoice[4]}", ln=True, align='L', fill=True, border=1)
+            # pdf.cell(200, 10, txt=f"Customer Phone: {invoice[4]}", ln=True, align='L')
+            # pdf.cell(200, 10, txt=f"Total Amount: {invoice[5]:.2f}", ln=True, align='L')
+                    
+            # Align right with Customer Details
+            pdf.set_xy(x=120, y=81)
+            pdf.set_fill_color(238, 238, 238)
+            pdf.cell(30, 7, txt=f"Account Title:", ln=True, align='L', fill=True, border=1)
+            pdf.set_xy(x=150, y=81)
+            pdf.cell(55, 7, txt=f"Rameez Ahmed", ln=True, align='L', border=1, fill=False)
+            pdf.set_xy(x=120, y=88)
+            pdf.cell(30, 7, txt=f"Account Number:", ln=True, align='L', fill=True, border=1)
+            pdf.set_xy(x=150, y=88)
+            pdf.cell(55, 7, txt=f"00207901029503", ln=True, align='L', border=1, fill=False)
+            pdf.set_xy(x=120, y=95)
+            pdf.cell(30, 7, txt=f"IBAN:", ln=True, align='L', fill=True, border=1)
+            pdf.set_xy(x=150, y=95)
+            pdf.cell(55, 7, txt=f"PK58HABB0000207901029503", ln=True, align='L', border=1, fill=False)
+            
             pdf.cell(200, 10, txt="", ln=True, align='L')
+            
+            pdf.ln()
+            
+            pdf.set_x(x=5)
+            
+            pdf.multi_cell_row(5, 40, 10, ["Item Name", "Description", "Price", "Quantity", "Total Price"], to_fill=True)
 
-            pdf.multi_cell_row(5, 40, 10, ["Item Name", "Description", "Price", "Quantity", "Total Price"])
+            pdf.set_font("Helvetica", size=11, style='')
 
-            pdf.set_font("Helvetica", size=10)
-
-            for item in items:
-                pdf.multi_cell_row(5, 40, 5, [item[2], item[3], f"{item[4]:.2f}", str(item[5]), f"{item[6]:.2f}"])
-
-            pdf_name = f"invoices/invoice_{invoice_id}.pdf"
-            pdf.output(pdf_name)
+        for item in items:
+            pdf.set_x(x=5)
+            pdf.multi_cell_row(5, 40, 5, [item[2], item[3], f"{item[4]:.2f}", str(item[5]), f"{item[6]:.2f}"], to_fill=False)
+        
+        pdf.set_font("Helvetica", size=12)
+        
+        pdf.set_x(x=5)
+        pdf.multi_cell_row(5, 40, 10, ["", "", "", "Total Amount", f"{invoice[5]:.2f}"], to_fill=False)
 
             QMessageBox.information(self, 'PDF Generated', f'PDF file has been generated: {pdf_name}')
             self.clear_form()
@@ -233,7 +298,7 @@ class InvoiceGenerator(QMainWindow):
     
     def view_invoices(self):
         password, ok = QInputDialog.getText(self, 'Authentication', 'Enter password:', QLineEdit.Password)
-        if ok and password == 'retriever':  # Replace 'your_password' with the actual password
+        if ok and password == 'admin':  # Replace 'your_password' with the actual password
             self.invoiceWindow = InvoiceViewer()
             self.invoiceWindow.show()
         else:
@@ -295,25 +360,91 @@ class InvoiceViewer(QMainWindow):
         pdf = CustomPDF()
         pdf.add_page()
         
-        pdf.set_font("Helvetica", size=12)
+        pdf.set_char_spacing(0)
         
-        pdf.cell(200, 10, txt=f"Invoice ID: {invoice[0]}", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Date: {invoice[1]}", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Venue: {invoice[2]}", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Customer Name: {invoice[3]}", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Customer Phone: {invoice[4]}", ln=True, align='L')
-        pdf.cell(200, 10, txt=f"Total Amount: {invoice[5]:.2f}", ln=True, align='L')
+        # Invoice Header
+        pdf.set_font("Helvetica", size=15, style='B')
+        pdf.set_fill_color(0, 0, 0)
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_xy(x=0, y=5)
+        pdf.cell(210, 10, txt='INVOICE', align='C', fill=True)
+        
+        # Reset Colors
+        pdf.set_fill_color(255, 255, 255)
+        pdf.set_text_color(0, 0, 0)
+        
+        # Set Logo
+        pdf.image('logo_resized.png', x=10, y=20, w=50, h=35)
+        
+        pdf.set_font("Helvetica", size=14, style='B')
+        
+        # Align right with Logo
+        pdf.set_xy(x=120, y=30)
+        pdf.set_fill_color(238, 238, 238)
+        pdf.cell(30, 7, txt=f"Invoice ID:", ln=True, align='L', fill=True, border=1)
+        pdf.set_xy(x=150, y=30)
+        pdf.set_font("Helvetica", size=14, style='')
+        pdf.cell(40, 7, txt=f"{invoice[0]}", ln=True, align='L', border=1, fill=False)
+        pdf.set_xy(x=120, y=37)
+        pdf.set_font("Helvetica", size=14, style='B')
+        pdf.cell(30, 7, txt=f"Date:", ln=True, align='L', fill=True, border=1)
+        pdf.set_xy(x=150, y=37)
+        pdf.set_font("Helvetica", size=14, style='')
+        pdf.cell(40, 7, txt=f"{invoice[1]}", ln=True, align='L', border=1, fill=False)
+        pdf.set_xy(x=120, y=44)
+        pdf.set_font("Helvetica", size=14, style='B')
+        pdf.multi_cell(30, 7, txt=f"Venue:", ln=True, align='L', fill=True, border=1)
+        pdf.set_xy(x=150, y=44)
+        pdf.set_font("Helvetica", size=14, style='')
+        pdf.multi_cell(40, 7, txt=f"{invoice[2]}", ln=True, align='L', border=1, fill=False)
+        
+        pdf.set_font("Helvetica", size=10, style='')
+        
+        # Below Logo Customer Details
+        pdf.set_xy(x=7, y=81)
+        pdf.cell(43, 7, txt=f"Customer Name:", ln=True, align='L', fill=True, border=1)
+        pdf.set_xy(x=48, y=81)
+        pdf.cell(43, 7, txt=f"{invoice[3]}", ln=True, align='L', fill=True, border=1)
+        pdf.set_xy(x=7, y=88)
+        pdf.cell(43, 7, txt=f"Customer Phone:", ln=True, align='L', fill=True, border=1)
+        pdf.set_xy(x=48, y=88)
+        pdf.cell(43, 7, txt=f"{invoice[4]}", ln=True, align='L', fill=True, border=1)
+        # pdf.cell(200, 10, txt=f"Customer Phone: {invoice[4]}", ln=True, align='L')
+        # pdf.cell(200, 10, txt=f"Total Amount: {invoice[5]:.2f}", ln=True, align='L')
+                
+        # Align right with Customer Details
+        pdf.set_xy(x=120, y=81)
+        pdf.set_fill_color(238, 238, 238)
+        pdf.cell(30, 7, txt=f"Account Title:", ln=True, align='L', fill=True, border=1)
+        pdf.set_xy(x=150, y=81)
+        pdf.cell(55, 7, txt=f"Rameez Ahmed", ln=True, align='L', border=1, fill=False)
+        pdf.set_xy(x=120, y=88)
+        pdf.cell(30, 7, txt=f"Account Number:", ln=True, align='L', fill=True, border=1)
+        pdf.set_xy(x=150, y=88)
+        pdf.cell(55, 7, txt=f"00207901029503", ln=True, align='L', border=1, fill=False)
+        pdf.set_xy(x=120, y=95)
+        pdf.cell(30, 7, txt=f"IBAN:", ln=True, align='L', fill=True, border=1)
+        pdf.set_xy(x=150, y=95)
+        pdf.cell(55, 7, txt=f"PK58HABB0000207901029503", ln=True, align='L', border=1, fill=False)
         
         pdf.cell(200, 10, txt="", ln=True, align='L')
         
         pdf.ln()
         
-        pdf.multi_cell_row(5, 40, 10, ["Item Name", "Description", "Price", "Quantity", "Total Price"])
+        pdf.set_x(x=5)
         
-        pdf.set_font("Helvetica", size=10)
-        
+        pdf.multi_cell_row(5, 40, 10, ["Item Name", "Description", "Price", "Quantity", "Total Price"], to_fill=True)
+
+        pdf.set_font("Helvetica", size=11, style='')
+
         for item in items:
-            pdf.multi_cell_row(5, 40, 5, [item[2], item[3], f"{item[4]:.2f}", str(item[5]), f"{item[6]:.2f}"])
+            pdf.set_x(x=5)
+            pdf.multi_cell_row(5, 40, 5, [item[2], item[3], f"{item[4]:.2f}", str(item[5]), f"{item[6]:.2f}"], to_fill=False)
+        
+        pdf.set_font("Helvetica", size=12)
+        
+        pdf.set_x(x=5)
+        pdf.multi_cell_row(5, 40, 10, ["", "", "", "Total Amount", f"{invoice[5]:.2f}"], to_fill=False)
         
         pdf_name = f"duplicate_invoices/invoice_{invoice_id}.pdf"
         pdf.output(pdf_name)
