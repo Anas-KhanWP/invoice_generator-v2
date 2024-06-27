@@ -1,8 +1,12 @@
 import sys
 import sqlite3
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QFormLayout, QLabel, QLineEdit, 
-                             QPushButton, QMessageBox, QTableWidget, QTableWidgetItem, QHeaderView, QDateEdit, QInputDialog)
-from PyQt5.QtCore import QDate
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QFormLayout, QLineEdit, QLabel,
+    QDateEdit, QTableWidget, QHeaderView, QPushButton, QGroupBox, QHBoxLayout, QMessageBox,
+    QTableWidgetItem, QGridLayout, QInputDialog
+)
+from PyQt5.QtCore import QDate, Qt
+from PyQt5.QtGui import QDoubleValidator, QIntValidator, QFont
 from fpdf import FPDF
 from custom import CustomPDF
 
@@ -47,70 +51,141 @@ class InvoiceGenerator(QMainWindow):
         
         self.layout = QVBoxLayout()
         
-        # Form Layout
-        self.formLayout = QFormLayout()
+        # Define common font for better visibility
+        common_font = QFont('Arial', 10)
+        
+        # Invoice Details Group
+        self.invoiceDetailsGroup = QGroupBox('Invoice Details')
+        self.invoiceDetailsGroup.setFont(QFont('Arial', 12, QFont.Bold))
+        self.invoiceDetailsLayout = QFormLayout()
         
         self.dateInput = QDateEdit(self)
         self.dateInput.setCalendarPopup(True)
         self.dateInput.setDate(QDate.currentDate())
+        self.dateInput.setToolTip("Select the date of the invoice")
+        self.dateInput.setFont(common_font)
         
         self.venueInput = QLineEdit(self)
+        self.venueInput.setPlaceholderText("Enter the venue")
+        self.venueInput.setToolTip("Enter the venue of the event")
+        self.venueInput.setFont(common_font)
+        
         self.customerInput = QLineEdit(self)
+        self.customerInput.setPlaceholderText("Enter the customer name")
+        self.customerInput.setToolTip("Enter the full name of the customer")
+        self.customerInput.setFont(common_font)
+        
         self.phoneInput = QLineEdit(self)
+        self.phoneInput.setPlaceholderText("Enter the customer phone")
+        self.phoneInput.setToolTip("Enter the customer's phone number")
+        self.phoneInput.setValidator(QIntValidator())
+        self.phoneInput.setFont(common_font)
+        
         self.paidAmountInput = QLineEdit(self)
-        self.remainingAmountLabel = QLabel('Remaining Amount: 0.0', self)
-        self.paidStatusLabel = QLabel('Paid Status: Not Paid', self)
+        self.paidAmountInput.setPlaceholderText("Enter the amount paid")
+        self.paidAmountInput.setToolTip("Enter the amount paid by the customer")
+        self.paidAmountInput.setValidator(QDoubleValidator(0.0, 99999999.99, 2))
+        self.paidAmountInput.setFont(common_font)
         
-        self.formLayout.addRow('Date:', self.dateInput)
-        self.formLayout.addRow('Venue:', self.venueInput)
-        self.formLayout.addRow('Customer Name:', self.customerInput)
-        self.formLayout.addRow('Customer Phone:', self.phoneInput)
-        self.formLayout.addRow('Paid Amount:', self.paidAmountInput)
-        self.formLayout.addRow(self.remainingAmountLabel)
-        self.formLayout.addRow(self.paidStatusLabel)
+        self.invoiceDetailsLayout.addRow('Date:', self.dateInput)
+        self.invoiceDetailsLayout.addRow('Venue:', self.venueInput)
+        self.invoiceDetailsLayout.addRow('Customer Name:', self.customerInput)
+        self.invoiceDetailsLayout.addRow('Customer Phone:', self.phoneInput)
+        self.invoiceDetailsLayout.addRow('Paid Amount:', self.paidAmountInput)
         
-        self.layout.addLayout(self.formLayout)
+        self.invoiceDetailsGroup.setLayout(self.invoiceDetailsLayout)
+        self.layout.addWidget(self.invoiceDetailsGroup)
         
-        # Item Entry Layout
+        # Item Entry Group
+        self.itemEntryGroup = QGroupBox('Add Item')
+        self.itemEntryGroup.setFont(QFont('Arial', 12, QFont.Bold))
         self.itemEntryLayout = QFormLayout()
         
         self.itemNameInput = QLineEdit(self)
+        self.itemNameInput.setPlaceholderText("Enter item name")
+        self.itemNameInput.setToolTip("Enter the name of the item")
+        self.itemNameInput.setFont(common_font)
+        
         self.itemDescriptionInput = QLineEdit(self)
+        self.itemDescriptionInput.setPlaceholderText("Enter item description")
+        self.itemDescriptionInput.setToolTip("Enter a brief description of the item")
+        self.itemDescriptionInput.setFont(common_font)
+        
         self.itemPriceInput = QLineEdit(self)
+        self.itemPriceInput.setPlaceholderText("Enter item price")
+        self.itemPriceInput.setToolTip("Enter the price of the item")
+        self.itemPriceInput.setValidator(QDoubleValidator(0.0, 99999999.99, 2))
+        self.itemPriceInput.setFont(common_font)
+        
         self.itemQuantityInput = QLineEdit(self)
+        self.itemQuantityInput.setPlaceholderText("Enter item quantity")
+        self.itemQuantityInput.setToolTip("Enter the quantity of the item")
+        self.itemQuantityInput.setValidator(QIntValidator())
+        self.itemQuantityInput.setFont(common_font)
         
         self.itemEntryLayout.addRow('Item Name:', self.itemNameInput)
         self.itemEntryLayout.addRow('Description:', self.itemDescriptionInput)
         self.itemEntryLayout.addRow('Price:', self.itemPriceInput)
         self.itemEntryLayout.addRow('Quantity:', self.itemQuantityInput)
         
-        self.layout.addLayout(self.itemEntryLayout)
+        self.itemEntryGroup.setLayout(self.itemEntryLayout)
+        self.layout.addWidget(self.itemEntryGroup)
         
+        # Add Item Button
         self.addItemButton = QPushButton('Add Item', self)
+        self.addItemButton.setToolTip("Click to add the item to the invoice")
+        self.addItemButton.setFont(common_font)
         self.addItemButton.clicked.connect(self.add_item)
         
         self.layout.addWidget(self.addItemButton)
         
-        # Table for items
+        # Items Table
         self.itemsTable = QTableWidget(0, 5)
         self.itemsTable.setHorizontalHeaderLabels(['Name', 'Description', 'Price', 'Quantity', 'Total Price'])
         self.itemsTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        
+        self.itemsTable.setFont(common_font)
         self.layout.addWidget(self.itemsTable)
         
-        # Total Amount
+        # Amount and Status Group
+        self.amountStatusGroup = QGroupBox('Amount and Status')
+        self.amountStatusGroup.setFont(QFont('Arial', 12, QFont.Bold))
+        self.amountStatusLayout = QGridLayout()
+        
         self.totalAmountLabel = QLabel('Total Amount: 0.0', self)
-        self.layout.addWidget(self.totalAmountLabel)
+        self.remainingAmountLabel = QLabel('Remaining Amount: 0.0', self)
+        self.paidStatusLabel = QLabel('Paid Status: Not Paid', self)
         
-        # Buttons
+        self.totalAmountLabel.setFont(common_font)
+        self.remainingAmountLabel.setFont(common_font)
+        self.paidStatusLabel.setFont(common_font)
+        
+        self.amountStatusLayout.addWidget(self.totalAmountLabel, 0, 0)
+        self.amountStatusLayout.addWidget(self.remainingAmountLabel, 0, 1)
+        self.amountStatusLayout.addWidget(self.paidStatusLabel, 0, 2)
+        
+        self.amountStatusGroup.setLayout(self.amountStatusLayout)
+        self.layout.addWidget(self.amountStatusGroup)
+        
+        # Button Group
+        self.buttonGroup = QGroupBox('Actions')
+        self.buttonGroup.setFont(QFont('Arial', 12, QFont.Bold))
+        self.buttonLayout = QHBoxLayout()
+        
         self.saveButton = QPushButton('Save Invoice', self)
-        self.viewButton = QPushButton('View Invoices', self)
-        
+        self.saveButton.setToolTip("Click to save the invoice and generate a PDF")
+        self.saveButton.setFont(common_font)
         self.saveButton.clicked.connect(self.save_and_generate_pdf)
+        
+        self.viewButton = QPushButton('View Invoices', self)
+        self.viewButton.setToolTip("Click to view past invoices")
+        self.viewButton.setFont(common_font)
         self.viewButton.clicked.connect(self.view_invoices)
         
-        self.layout.addWidget(self.saveButton)
-        self.layout.addWidget(self.viewButton)
+        self.buttonLayout.addWidget(self.saveButton)
+        self.buttonLayout.addWidget(self.viewButton)
+        self.buttonGroup.setLayout(self.buttonLayout)
+        
+        self.layout.addWidget(self.buttonGroup)
         
         self.centralWidget.setLayout(self.layout)
 
@@ -541,7 +616,9 @@ class InvoiceViewer(QMainWindow):
         QMessageBox.information(self, 'PDF Generated', f'PDF file has been generated: {pdf_name}')
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = InvoiceGenerator()
-    ex.show()
-    sys.exit(app.exec_())
+    password, ok = QInputDialog.getText('Authentication', 'Enter password:', QLineEdit.Password)
+    if ok and password == 'admin':  # Replace 'your_password' with the actual password
+        app = QApplication(sys.argv)
+        ex = InvoiceGenerator()
+        ex.show()
+        sys.exit(app.exec_())
