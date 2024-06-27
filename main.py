@@ -264,14 +264,14 @@ class InvoiceGenerator(QMainWindow):
 
             pdf.set_font("Helvetica", size=11, style='')
 
-        for item in items:
+            for item in items:
+                pdf.set_x(x=5)
+                pdf.multi_cell_row(5, 40, 5, [item[2], item[3], f"{item[4]:.2f}", str(item[5]), f"{item[6]:.2f}"], to_fill=False)
+            
+            pdf.set_font("Helvetica", size=12)
+            
             pdf.set_x(x=5)
-            pdf.multi_cell_row(5, 40, 5, [item[2], item[3], f"{item[4]:.2f}", str(item[5]), f"{item[6]:.2f}"], to_fill=False)
-        
-        pdf.set_font("Helvetica", size=12)
-        
-        pdf.set_x(x=5)
-        pdf.multi_cell_row(5, 40, 10, ["", "", "", "Total Amount", f"{invoice[5]:.2f}"], to_fill=False)
+            pdf.multi_cell_row(5, 40, 10, ["", "", "", "Total Amount", f"{invoice[5]:.2f}"], to_fill=False)
 
             QMessageBox.information(self, 'PDF Generated', f'PDF file has been generated: {pdf_name}')
             self.clear_form()
